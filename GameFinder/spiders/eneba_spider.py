@@ -7,16 +7,18 @@ class EnebaSpider(scrapy.Spider):
     base_address = "https://www.eneba.com"
     
     def start_requests(self):
-        game = getattr(self, "game", None)
-        platforms = getattr(self, "platforms", "xbox")
-        platforms = platforms.split(",")
+        game = getattr(self, "game", "")
+        platforms = getattr(self, "platforms", "xbox").split(",")
         
         platforms = list(map(lambda platform: f"drms[]={platform}", platforms))
         platforms = "&".join(platforms)
         
+        regions = getattr(self, "regions", "global").split(",")
+        regions = list(map(lambda region: f"regions[]={region}", regions))
+        regions = "&".join(regions)
+        
         urls = [
-            f"{self.base_address}/latam/store/games?{platforms}&page=1&regions[]=global&regions[]=latam&regions["
-            f"]=colombia&text={game}&types[]=game"
+            f"{self.base_address}/latam/store/games?{platforms}&page=1&{regions}&text={game}&types[]=game"
         ]
         
         # https://www.eneba.com/latam/store/games?page=1&regions[]=global&regions[]=latam&regions[]=colombia&text=cyber&types[]=game
