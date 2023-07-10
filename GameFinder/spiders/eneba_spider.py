@@ -1,33 +1,24 @@
 import scrapy
 
+from GameFinder.Builders.EnebaUrlBuilder import EnebaUrlBuilder
+
 
 class EnebaSpider(scrapy.Spider):
     name = "eneba"
     
     base_address = "https://www.eneba.com"
+    game = None
     
     def start_requests(self):
-        game = getattr(self, "game", "")
-        platforms = getattr(self, "platforms", "xbox").split(",")
+        self.game = getattr(self, "game", None)
+        platforms = getattr(self, "platforms", "xbox")
+        regions = getattr(self, "regions", "global")
         
-        platforms = list(map(lambda platform: f"drms[]={platform}", platforms))
-        platforms = "&".join(platforms)
+        builder = EnebaUrlBuilder(self.base_address)
         
-        regions = getattr(self, "regions", "global").split(",")
-        regions = list(map(lambda region: f"regions[]={region}", regions))
-        regions = "&".join(regions)
-        
-        urls = [
-            f"{self.base_address}/latam/store/games?{platforms}&page=1&{regions}&text={game}&types[]=game"
-        ]
-        
-        # https://www.eneba.com/latam/store/games?page=1&regions[]=global&regions[]=latam&regions[]=colombia&text=cyber&types[]=game
-        
-        # https://www.eneba.com/latam/store/games?drms[]=xbox&page=1&regions[]=global&regions[]=latam&regions[]=colombia&text=cyber&types[]=game
-        
-        for url in urls:
-            yield scrapy.Request(url=url, callback=self.parse,
-                                 cookies={"exchange": "COP", "region": "colombia"})
+        url = builder.add_platforms(platforms).add_regions(regions).add_game(self.game).build()
+        yield scrapy.Request(url=url, callback=self.parse,
+                             cookies={"exchange": "COP", "region": "colombia"})
     
     def parse(self, response, **kwargs):
         main_game_container = response.css(
@@ -42,7 +33,12 @@ class EnebaSpider(scrapy.Spider):
             
             game_price = price_section.css("div:first-child span span::text").get()
             
+            # avoid blacklisted words
             if any(word in game_title.lower() for word in self.get_blacklist()):
+                continue
+            
+            # avoid null price
+            if not game_price:
                 continue
             
             game_url = f"{self.base_address}{price_section.css('::attr(href)').get()}"
@@ -52,8 +48,15 @@ class EnebaSpider(scrapy.Spider):
                 "value": game_price,
                 "link": game_url
             }
+        
+        # avoid pagination if game is specified
+        if self.game:
+            return
+        
+        next_page = response.css("ul.rc-pagination li.rc-pagination-next a::attr(href)").get()
+        if next_page is not None:
+            next_page = response.urljoin(next_page)
+            yield scrapy.Request(next_page, callback=self.parse)
     
     def get_blacklist(self):
         return getattr(self, "blacklist", "").split(",")
-
-# next = response.css("ul.rc-pagination li.rc-pagination-next").get()
