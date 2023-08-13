@@ -1,6 +1,9 @@
+import re
+
 import scrapy
 
 from GameFinder.Builders.EnebaUrlBuilder import EnebaUrlBuilder
+from GameFinder.items import GameItem
 
 
 class EnebaSpider(scrapy.Spider):
@@ -25,8 +28,12 @@ class EnebaSpider(scrapy.Spider):
             "main div div section div.JZCH_t div.pFaGHa")
         
         for game in main_game_container:
+            game_item = GameItem()
             game_title = game.css(
                 "div:nth-child(2) div div:first-child span::text").get()
+            
+            game_photos = game.css(
+                "div:first-child div picture source::attr(srcset)").getall()
             
             price_section = game.css(
                 "div:nth-child(3) a")
@@ -43,11 +50,14 @@ class EnebaSpider(scrapy.Spider):
             
             game_url = f"{self.base_address}{price_section.css('::attr(href)').get()}"
             
-            yield {
-                "title": game_title,
-                "value": game_price,
-                "link": game_url
-            }
+            game_item["title"] = game_title
+            game_item["price"] = normalize_price(game_price)
+            game_item["link"] = game_url
+            game_item["store"] = "eneba"
+            game_item["photos"] = process_pictures(game_photos)
+            game_item["exchange"] = "COP"
+            
+            yield game_item
         
         # avoid pagination if game is specified
         if self.game:
@@ -60,3 +70,28 @@ class EnebaSpider(scrapy.Spider):
     
     def get_blacklist(self):
         return getattr(self, "blacklist", "").split(",")
+
+
+def process_pictures(pictures):
+    new_list = []
+    for item in pictures:
+        links = re.findall(r'(https?://\S+)', item)
+        
+        new_list.extend(build_image(links))
+    return new_list
+
+
+def build_image(img):
+    images = []
+    for url in img:
+        image = {"url": url, "width": 0, "height": 0}
+        match = re.search(r'(\d+)x(\d+)', url)
+        if match:
+            image["width"], image["height"] = match.groups()
+            images.append(image)
+    
+    return images
+
+
+def normalize_price(price):
+    return price.replace("$", "").replace(",", "").replace(".", "").replace("COP", "").strip()

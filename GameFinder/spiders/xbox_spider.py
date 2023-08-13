@@ -1,9 +1,10 @@
 import json
-
-import scrapy
 import unicodedata
 
+import scrapy
+
 from GameFinder.Builders.XboxUrlBuilder import XboxUrlBuilder
+from GameFinder.items import GameItem
 
 
 class XboxSpider(scrapy.Spider):
@@ -27,16 +28,20 @@ class XboxSpider(scrapy.Spider):
         
         for game in results_list:
             game_title = game["title"]
-            game_price = game["specificPrices"]["purchaseable"][0]["listPrice"]
             game_sku = game["specificPrices"]["purchaseable"][0]["skuId"]
             game_id = game["productId"]
-            game_link = self.build_game_link(game_title, game_id, game_sku)
+            game_photos = [{"url": img["url"], "width": img["width"], "height": img["height"]}
+                           for img in game["images"].values()]
             
-            yield {
-                "title": game_title,
-                "value": game_price,
-                "link": game_link
-            }
+            game_item = GameItem()
+            game_item["title"] = game_title
+            game_item["price"] = game["specificPrices"]["purchaseable"][0]["listPrice"]
+            game_item["link"] = self.build_game_link(game_title, game_id, game_sku)
+            game_item["store"] = "xbox"
+            game_item["photos"] = game_photos
+            game_item["exchange"] = "COP"
+            
+            yield game_item
     
     @staticmethod
     def find_json(text: str):

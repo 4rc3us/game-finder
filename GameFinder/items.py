@@ -6,7 +6,10 @@
 import scrapy
 
 
-class GamefinderItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+class GameItem(scrapy.Item):
+    title = scrapy.Field(serializer=str)
+    price = scrapy.Field(serializer=float)
+    link = scrapy.Field(serializer=str)
+    store = scrapy.Field(serializer=str)
+    photos = scrapy.Field(serializer=list)
+    exchange = scrapy.Field(serializer=str)
