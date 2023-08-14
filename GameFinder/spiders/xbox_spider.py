@@ -11,7 +11,6 @@ class XboxSpider(scrapy.Spider):
     name = "xbox"
     base_address = "https://www.xbox.com/es-CO/search/results/games"
     game = None
-    data = []
     
     def start_requests(self):
         self.game = getattr(self, "game", None)
@@ -42,7 +41,7 @@ class XboxSpider(scrapy.Spider):
             game_item["photos"] = game_photos
             game_item["exchange"] = "COP"
             
-            self.data.append(game_item)
+            yield game_item
     
     @staticmethod
     def find_json(text: str):
