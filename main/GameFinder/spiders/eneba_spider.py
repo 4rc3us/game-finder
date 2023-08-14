@@ -11,7 +11,8 @@ class EnebaSpider(scrapy.Spider):
     
     base_address = "https://www.eneba.com"
     game = None
-    
+    data = []
+
     def start_requests(self):
         self.game = getattr(self, "game", None)
         platforms = getattr(self, "platforms", "xbox")
@@ -56,9 +57,9 @@ class EnebaSpider(scrapy.Spider):
             game_item["store"] = "eneba"
             game_item["photos"] = process_pictures(game_photos)
             game_item["exchange"] = "COP"
-            
-            yield game_item
-        
+
+            self.data.append(game_item)
+
         # avoid pagination if game is specified
         if self.game:
             return
