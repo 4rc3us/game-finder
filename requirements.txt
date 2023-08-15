@@ -34,4 +34,4 @@ typing_extensions==4.7.1
 urllib3==2.0.4
 w3lib==2.1.2
 zope.interface==6.0
-Django~=4.2.4
+scrapyrt==0.14.0

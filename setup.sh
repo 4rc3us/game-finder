@@ -10,14 +10,14 @@ fi
 # check if pip is installed
 if ! command -v pip &> /dev/null
 then
-    echo "Pip could not be found"
+    echo "Pip could not be found please install pip"
     exit
 fi
 
 # check if virtualenv is installed
 if ! command -v python -m venv &> /dev/null
 then
-    echo "Virtualenv could not be found"
+    echo "Virtualenv could not be found please install pip"
     exit
 fi
 
@@ -31,7 +31,7 @@ fi
 # activate virtualenv
 source venv/bin/activate
 
-# install dependencies but check if requirements.txt exists and dependencies aren't installed
+# install dependencies
 if [ -f "requirements.txt" ]
 then
     echo "Installing dependencies from requirements.txt"
@@ -39,6 +39,3 @@ then
 else
     echo "requirements.txt not found"
 fi
-
-# start the app (its a django app)
-echo "Starting app"
