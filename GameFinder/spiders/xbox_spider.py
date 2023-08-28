@@ -18,6 +18,7 @@ class XboxSpider(scrapy.Spider):
     
     def start_requests(self):
         self.game = getattr(self, "game", None)
+        platforms = getattr(self, "platforms", None)
         
         builder = XboxUrlBuilder(self.base_address)
         
