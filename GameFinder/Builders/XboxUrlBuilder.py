@@ -19,8 +19,7 @@ class XboxUrlBuilder:
     
     def build(self):
         params = "&".join(self.params)
-        platforms = self.separator.join(self.platforms)
-        return f"{self.base_address}?{params}&PlayWith={platforms}"
+        return f"{self.base_address}?{params}"
     
     @staticmethod
     def handle_platform(platform: str):
