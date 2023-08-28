@@ -18,9 +18,7 @@ jobs:
         run: |
           # Get the list of changed files
 
-          CHANGED_FILES=$(curl -s -X GET -G \ 
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }}/files | jq -r '.[].filename')
+          CHANGED_FILES=$(curl -s -X GET -G -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }}/files | jq -r '.[].filename')
 
           # Check if any of the changed files are in .dockerignore
           SHOULD_SKIP=false
@@ -32,7 +30,7 @@ jobs:
           done <<< "$CHANGED_FILES"
 
           # Set the output variable
-          echo "::set-output name=should_skip::$SHOULD_SKIP"
+          echo "should_skip=$SHOULD_SKIP" >> $GITHUB_OUTPUT
 
   build-and-publish:
     needs: check-dockerignore
@@ -78,7 +76,7 @@ jobs:
 
           # Set the new version as an output variable
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-          echo "::set-output name=version::$NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Create a git tag
         run: |
@@ -95,3 +93,4 @@ jobs:
           tags: |
             jdarc3/game-finder:${{ steps.get_version.outputs.version }}
             jdarc3/game-finder:latest
+
