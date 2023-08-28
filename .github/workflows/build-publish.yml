@@ -1,0 +1,97 @@
+name: Build and Publish Docker Image
+
+on:
+  pull_request:
+    types: [ closed ]
+
+jobs:
+  check-dockerignore:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.check-dockerignore.outputs.should_skip }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: Check if changed files are in .dockerignore
+        id: check-dockerignore
+        run: |
+          # Get the list of changed files
+
+          CHANGED_FILES=$(curl -s -X GET -G \ 
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }}/files | jq -r '.[].filename')
+
+          # Check if any of the changed files are in .dockerignore
+          SHOULD_SKIP=false
+          while read -r file; do
+            if grep -q "^$file$" .dockerignore; then
+              SHOULD_SKIP=true
+              break
+            fi
+          done <<< "$CHANGED_FILES"
+
+          # Set the output variable
+          echo "::set-output name=should_skip::$SHOULD_SKIP"
+
+  build-and-publish:
+    needs: check-dockerignore
+    if: needs.check-dockerignore.outputs.should_skip == 'false' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Get the version
+        id: get_version
+        run: |
+          # Get the current version from the latest git tag
+          CURRENT_VERSION=$(git describe --tags --abbrev=0 --tags)
+          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+
+          # Increment the version based on the PR title
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if [[ $PR_TITLE == *"+major"* ]]; then
+            MAJOR=$((MAJOR+1))
+            MINOR=0
+            PATCH=0
+          elif [[ $PR_TITLE == *"+minor"* ]]; then
+            MINOR=$((MINOR+1))
+            PATCH=0
+          elif [[ $PR_TITLE == *"+patch"* ]]; then
+            PATCH=$((PATCH+1))
+          fi
+
+          # Set the new version as an output variable
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "::set-output name=version::$NEW_VERSION"
+
+      - name: Create a git tag
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag ${{ steps.get_version.outputs.version }}
+          git push origin --tags
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: |
+            jdarc3/game-finder:${{ steps.get_version.outputs.version }}
+            jdarc3/game-finder:latest
