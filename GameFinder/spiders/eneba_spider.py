@@ -54,7 +54,7 @@ class EnebaSpider(scrapy.Spider):
             game_item["price"] = normalize_price(game_price)
             game_item["link"] = game_url
             game_item["store"] = "eneba"
-            game_item["photos"] = process_pictures(game_photos)
+            game_item["photo"] = process_pictures(game_photos)[2]
             game_item["exchange"] = "COP"
             
             yield game_item
