@@ -11,5 +11,5 @@ class GameItem(scrapy.Item):
     price = scrapy.Field(serializer=float)
     link = scrapy.Field(serializer=str)
     store = scrapy.Field(serializer=str)
-    photos = scrapy.Field(serializer=list)
+    photo = scrapy.Field(serializer=str)
     exchange = scrapy.Field(serializer=str)
