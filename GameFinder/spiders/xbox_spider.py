@@ -15,6 +15,18 @@ def normalize_price(price: str):
     return "0"
 
 
+def format_url(game):
+    # I need to add the protocol to the url if it doesn't have it
+    url = game.css("img.c-image::attr(src)").get()
+    if url is None:
+        return ""
+    
+    if url.startswith("//"):
+        return "https:" + url
+    
+    return url
+
+
 class XboxSpider(scrapy.Spider):
     name = "xbox"
     base_address = "https://www.xbox.com/es-CO/search"
@@ -38,7 +50,7 @@ class XboxSpider(scrapy.Spider):
         for game in games:
             game_item = GameItem()
             game_title = game.css("span.x-heading::text").get()
-            game_photo = 'http:' + game.css("img.c-image::attr(src)").get()
+            game_photo = format_url(game)
             game_price = game.css("div.x-price span::text").get()
             game_url = game.css("a::attr(href)").get()
             
