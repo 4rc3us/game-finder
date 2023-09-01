@@ -21,7 +21,7 @@ class EnebaSpider(scrapy.Spider):
         
         url = builder.add_platforms(platforms).add_regions(regions).add_game(self.game).build()
         yield scrapy.Request(url=url, callback=self.parse,
-                             cookies={"exchange": "COP", "region": "colombia"})
+                             cookies={"exchange": "COP", "region": regions})
     
     def parse(self, response, **kwargs):
         main_game_container = response.css(
