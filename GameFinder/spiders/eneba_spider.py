@@ -21,7 +21,7 @@ class EnebaSpider(scrapy.Spider):
         
         url = builder.add_platforms(platforms).add_regions(regions).add_game(self.game).build()
         yield scrapy.Request(url=url, callback=self.parse,
-                             cookies={"exchange": "COP", "region": "colombia"})
+                             cookies={"exchange": "COP", "region": regions})
     
     def parse(self, response, **kwargs):
         main_game_container = response.css(
@@ -89,11 +89,7 @@ def process_pictures(pictures):
 def build_image(img):
     images = []
     for url in img:
-        image = {"url": url, "width": 0, "height": 0}
-        match = re.search(r'(\d+)x(\d+)', url)
-        if match:
-            image["width"], image["height"] = match.groups()
-            images.append(image)
+        images.append(url)
     
     return images
 
