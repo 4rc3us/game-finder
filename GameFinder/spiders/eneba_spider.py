@@ -89,11 +89,7 @@ def process_pictures(pictures):
 def build_image(img):
     images = []
     for url in img:
-        image = {"url": url, "width": 0, "height": 0}
-        match = re.search(r'(\d+)x(\d+)', url)
-        if match:
-            image["width"], image["height"] = match.groups()
-            images.append(image)
+        images.append(url)
     
     return images
 
