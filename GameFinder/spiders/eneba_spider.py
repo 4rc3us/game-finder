@@ -69,7 +69,12 @@ class EnebaSpider(scrapy.Spider):
             yield scrapy.Request(next_page, callback=self.parse)
     
     def get_blacklist(self):
-        return getattr(self, "blacklist", "").split(",")
+        black_list = getattr(self, "blacklist", None)
+        
+        if not black_list:
+            return []
+        
+        return black_list.split(",")
 
 
 def process_pictures(pictures):
